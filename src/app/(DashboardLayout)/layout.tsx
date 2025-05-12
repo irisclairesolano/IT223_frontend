@@ -4,7 +4,7 @@ import React from "react";
 import Header from "@/app/(DashboardLayout)/layout/header/Header";
 import Sidebar from "@/app/(DashboardLayout)/layout/sidebar/Sidebar";
 import Footer from "./layout/footer/page";
-import Topbar from "./layout/header/Topbar";
+// import Topbar from "./layout/header/Topbar";
 import theme from "@/utils/theme";
 
 const MainWrapper = styled("div")(() => ({
@@ -40,7 +40,7 @@ export default function RootLayout({
       {/* Main Wrapper */}
       {/* ------------------------------------------- */}
       <PageWrapper className="page-wrapper">
-        <Topbar />
+        {/* <Topbar /> */}
 
         {/* ------------------------------------------- */}
         {/* Sidebar */}

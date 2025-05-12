@@ -47,7 +47,10 @@ const Topbar = () => {
             display: { xs: "none", md: "flex" }
           }}
         >
-          <Link href="https://www.wrappixel.com/" style={{ display: "flex" }}>
+          <Link
+            href="https://www.wrappixel.com/"
+            style={{ display: "flex" }}
+            legacyBehavior>
             <img src="/images/logos/logo-wrappixel.svg" width={147} alt="logo" />
           </Link>
           <Stack
@@ -60,7 +63,7 @@ const Topbar = () => {
                 href="https://www.wrappixel.com/templates/category/bootstrap-templates/"
                 style={{ display: "flex", height: "fit-content" }}
                 target="_blank"
-              >
+                legacyBehavior>
                 <GhostButton sx={{ gap: "8px", padding: "0", fontSize: "16px", ":hover": { color: "#714bff", backgroundColor: "transparent" } }}>
                   <Icon icon="solar:window-frame-linear" width={20} />
 
@@ -74,7 +77,7 @@ const Topbar = () => {
                 href="https://support.wrappixel.com/"
                 style={{ display: "flex", height: "fit-content" }}
                 target="_blank"
-              >
+                legacyBehavior>
                 <GhostButton sx={{ gap: "8px", padding: "0", fontSize: "16px", ":hover": { color: "#714bff", backgroundColor: "transparent" } }}>
                   <Icon icon="solar:question-circle-linear" width={20} />
 
@@ -88,7 +91,7 @@ const Topbar = () => {
                 href="https://www.wrappixel.com/hire-us/"
                 style={{ display: "flex", height: "fit-content" }}
                 target="_blank"
-              >
+                legacyBehavior>
                 <GhostButton sx={{ gap: "8px", padding: "0", fontSize: "16px", ":hover": { color: "#714bff", backgroundColor: "transparent" } }}>
                   <Icon icon="solar:case-round-linear" width={20} />
 

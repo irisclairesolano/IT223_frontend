@@ -85,7 +85,7 @@ const Profile = () => {
         })}
       >
         <MenuItem>
-          <Link href='/utilities/forms'>
+          <Link href='/utilities/forms' legacyBehavior>
             <Box display='flex' alignItems='center'>
               <ListItemIcon>
                 <IconUser width={20} />
@@ -95,7 +95,7 @@ const Profile = () => {
           </Link>
         </MenuItem>
         <MenuItem>
-          <Link href='/utilities/table'>
+          <Link href='/utilities/table' legacyBehavior>
             <Box display='flex' alignItems='center'>
               <ListItemIcon>
                 <IconMail width={20} />
@@ -105,7 +105,7 @@ const Profile = () => {
           </Link>
         </MenuItem>
         <MenuItem>
-          <Link href='/'>
+          <Link href='/' legacyBehavior>
             <Box display='flex' alignItems='center'>
               <ListItemIcon>
                 <IconDashboard width={20} />

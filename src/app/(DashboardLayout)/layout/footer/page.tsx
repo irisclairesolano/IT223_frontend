@@ -7,7 +7,7 @@ const Footer = () => {
     <Box sx={{ pt: 6, textAlign: "center" }}>
       <Typography>
         © {new Date().getFullYear()} All rights reserved by{" "}
-        <Link href="https://www.wrappixel.com">
+        <Link href="https://www.wrappixel.com" legacyBehavior>
           <Typography color='primary.main' component='span'>
             Wrappixel.com</Typography>
         </Link>{" "}
