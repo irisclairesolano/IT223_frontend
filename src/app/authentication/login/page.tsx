@@ -43,7 +43,7 @@ const Login = () => {
                             subtitle={
                                 <Stack direction="row" spacing={1} justifyContent="center" mt={3}>
                                     <Typography color="textSecondary" variant="subtitle1" fontWeight="500">
-                                        New to Flexy?
+                                        New to libIS?
                                     </Typography>
                                     <Typography
                                         component={Link}
