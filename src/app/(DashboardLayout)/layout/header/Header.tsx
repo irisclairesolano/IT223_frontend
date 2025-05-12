@@ -51,9 +51,9 @@ const Header = () => {
         <Box flexGrow={1} />
         <Stack spacing={1} direction="row" alignItems="center">
 
-          <Button variant="contained" color="primary" target="_blank" href="https://www.wrappixel.com/templates/flexy-nextjs-dashboard-material-ui/?ref=376#demos">
+          {/* <Button variant="contained" color="primary" target="_blank" href="https://www.wrappixel.com/templates/flexy-nextjs-dashboard-material-ui/?ref=376#demos">
             Check Pro Template
-          </Button>
+          </Button> */}
 
           <Profile />
         </Stack>

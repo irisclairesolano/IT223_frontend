@@ -2,7 +2,7 @@ import { useMediaQuery, Box, Drawer } from "@mui/material";
 import SidebarItems from "./SidebarItems";
 import { DashboardContext } from "@/app/context/DashboardContext";
 import { useContext } from "react";
-import Upgrade from "./Updrade";
+
 import Scrollbar from "../../components/custom-scroll/Scrollbar";
 
 
@@ -47,7 +47,7 @@ const Sidebar = ({
               {/* Sidebar Items */}
               {/* ------------------------------------------- */}
               <SidebarItems />
-              <Upgrade />
+ 
             </Box>
           </Scrollbar>
         </Drawer>
@@ -75,7 +75,7 @@ const Sidebar = ({
       <Scrollbar sx={{ height: "calc(100% - 73px)" }}>
         <SidebarItems />
       </Scrollbar>
-      <Upgrade />
+
     </Drawer>
   );
 };
