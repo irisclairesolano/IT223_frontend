@@ -14,7 +14,6 @@ import Link from "next/link";
 
 
 import { IconPoint } from "@tabler/icons-react";
-import Upgrade from "./Updrade";
 
 const renderMenuItems = (items: any[], pathDirect: string) => {
   return items.map((item) => {
