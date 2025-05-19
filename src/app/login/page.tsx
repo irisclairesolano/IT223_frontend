@@ -73,7 +73,7 @@ export default function LoginPage() {
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else if (error.message === 'Network Error') {
-        toast.error('Network error. Please check your connection and CORS settings.');
+        toast.error('Action too frequent. Try again later');
       } else {
         toast.error(`Login failed: ${error.message}`);
       }
