@@ -8,8 +8,6 @@ import {
   HomeIcon,
   ChartBarIcon,
   ArrowRightOnRectangleIcon,
-  ChevronDoubleLeftIcon,
-  ChevronDoubleRightIcon,
   XMarkIcon,
   Bars3BottomLeftIcon
 } from '@heroicons/react/24/outline';
@@ -26,7 +24,7 @@ const navigation = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { logout } = useAuth();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true); // Start collapsed by default
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
 
@@ -48,10 +46,6 @@ export default function Sidebar() {
     return null;
   }
 
-  const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
-  };
-
   const toggleMobileMenu = () => {
     setIsMobileOpen(!isMobileOpen);
   };
@@ -64,7 +58,7 @@ export default function Sidebar() {
       {/* Mobile menu button */}
       <button
         onClick={toggleMobileMenu}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition-all"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 hover:scale-105 active:scale-95"
       >
         {isMobileOpen ? (
           <XMarkIcon className="h-6 w-6" />
@@ -76,27 +70,22 @@ export default function Sidebar() {
       {/* Sidebar */}
       <div
         className={`fixed md:relative h-screen flex flex-col bg-gray-800 transition-all duration-300 ease-in-out ${sidebarWidth} ${mobileSidebarClass} md:translate-x-0 z-40`}
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
+        onMouseEnter={() => {
+          setIsHovering(true);
+          setIsCollapsed(false); // Expand on hover
+        }}
+        onMouseLeave={() => {
+          setIsHovering(false);
+          setIsCollapsed(true); // Collapse when mouse leaves
+        }}
       >
-        {/* Sidebar Header */}
-        <div className={`flex h-16 items-center justify-between border-b border-gray-700 px-4 ${isCollapsed ? 'flex-col justify-center space-y-1' : ''}`}>
+        {/* Sidebar Header - Simplified since we removed the toggle button */}
+        <div className={`flex h-16 items-center justify-center border-b border-gray-700 px-4`}>
           {!isCollapsed && (
             <h1 className="text-xl font-bold text-white whitespace-nowrap">
               Library Admin
             </h1>
           )}
-          <button 
-            onClick={toggleSidebar}
-            className="text-gray-400 hover:text-white transition-colors duration-200 p-1 rounded-full hover:bg-gray-700"
-            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {isCollapsed ? (
-              <ChevronDoubleRightIcon className="h-5 w-5" />
-            ) : (
-              <ChevronDoubleLeftIcon className="h-5 w-5" />
-            )}
-          </button>
         </div>
 
         {/* Navigation Links */}
@@ -111,31 +100,32 @@ export default function Sidebar() {
                 className={`group flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-2'} py-3 text-sm font-medium rounded-md transition-all duration-200 ease-in-out ${
                   isActive
                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white hover:shadow-md'
+                    : 'text-gray-300 hover:bg-gray-700 hover:text-white hover:shadow-md hover:translate-x-1'
                 }`}
                 title={isCollapsed ? item.name : ''}
               >
                 <div className="relative">
                   <item.icon
-                    className={`${isCollapsed ? 'mx-auto' : 'mr-3'} h-6 w-6 flex-shrink-0 transition-transform duration-200 ${
+                    className={`${isCollapsed ? 'mx-auto' : 'mr-3'} h-6 w-6 flex-shrink-0 transition-all duration-300 ${
                       isActive 
-                        ? 'text-white' 
-                        : 'text-gray-400 group-hover:text-white'
+                        ? 'text-white scale-110' 
+                        : 'text-gray-400 group-hover:text-white group-hover:scale-110'
                     }`}
                     aria-hidden="true"
                   />
                   {isActive && (
-                    <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-full"></span>
+                    <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-full transition-all duration-300 group-hover:h-8"></span>
                   )}
                 </div>
                 {!isCollapsed && (
-                  <span className="transition-all duration-200 group-hover:font-semibold">
+                  <span className="transition-all duration-300 group-hover:font-semibold group-hover:tracking-wide">
                     {item.name}
                   </span>
                 )}
                 {(isCollapsed && isHovering) && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md shadow-lg whitespace-nowrap z-50">
+                  <div className="absolute left-full ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-md shadow-lg whitespace-nowrap z-50 transition-all duration-200 opacity-0 group-hover:opacity-100 group-hover:ml-3">
                     {item.name}
+                    <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-l-0 border-r-4 border-solid border-t-transparent border-b-transparent border-r-gray-900"></div>
                   </div>
                 )}
               </Link>
@@ -150,21 +140,22 @@ export default function Sidebar() {
               logout();
               setIsMobileOpen(false);
             }}
-            className={`group flex items-center w-full ${isCollapsed ? 'justify-center px-0' : 'px-2'} py-3 text-sm font-medium rounded-md text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 ease-in-out`}
+            className={`group flex items-center w-full ${isCollapsed ? 'justify-center px-0' : 'px-2'} py-3 text-sm font-medium rounded-md text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-300 ease-in-out hover:translate-x-1`}
             title={isCollapsed ? "Logout" : ""}
           >
             <ArrowRightOnRectangleIcon
-              className={`${isCollapsed ? 'mx-auto' : 'mr-3'} h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-white transition-transform duration-200`}
+              className={`${isCollapsed ? 'mx-auto' : 'mr-3'} h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-white group-hover:scale-110 transition-all duration-300`}
               aria-hidden="true"
             />
             {!isCollapsed && (
-              <span className="transition-all duration-200 group-hover:font-semibold">
+              <span className="transition-all duration-300 group-hover:font-semibold group-hover:tracking-wide">
                 Logout
               </span>
             )}
             {(isCollapsed && isHovering) && (
-              <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md shadow-lg whitespace-nowrap z-50">
+              <div className="absolute left-full ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-md shadow-lg whitespace-nowrap z-50 transition-all duration-200 opacity-0 group-hover:opacity-100 group-hover:ml-3">
                 Logout
+                <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-l-0 border-r-4 border-solid border-t-transparent border-b-transparent border-r-gray-900"></div>
               </div>
             )}
           </button>
@@ -174,7 +165,7 @@ export default function Sidebar() {
       {/* Overlay for mobile */}
       {isMobileOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden transition-opacity duration-300"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
