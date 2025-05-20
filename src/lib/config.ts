@@ -3,10 +3,16 @@ import axios from 'axios';
 export const API_BASE_URL = 'https://it223-backend-production.up.railway.app/api';
 
 export const API_ENDPOINTS = {
-  books: `${API_BASE_URL}/books`,
-  users: `${API_BASE_URL}/users`,
-  login: `${API_BASE_URL}/login`,
-};
+  books: '/api/books',
+  users: '/api/users',
+  login: '/api/login',
+  currentUser: '/api/user',
+  transactions: '/api/transactions',
+  borrow: '/api/borrow',
+  return: '/api/return',
+} as const;
+
+
 
 // Configure axios defaults
 axios.defaults.headers.common['Accept'] = 'application/json';
