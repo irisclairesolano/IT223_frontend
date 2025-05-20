@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react';
 import { API_ENDPOINTS } from '@/lib/config';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { PlusIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon, UserIcon, IdentificationIcon, EnvelopeIcon, LockClosedIcon, CalendarIcon, ClockIcon } from '@heroicons/react/24/outline';
 
 interface User {
   id: number;
   name: string;
   email: string;
-  password: string; // hashed password
+  password: string;
   created_at: string;
   updated_at: string;
 }
@@ -28,20 +28,12 @@ export default function UsersPage() {
     email: '',
     password: '',
   });
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof User;
+    direction: 'ascending' | 'descending';
+  } | null>(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    // Filter users based on search query
-    const filtered = users.filter(user => 
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredUsers(filtered);
-  }, [searchQuery, users]);
-
+  // Define fetchUsers first
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -87,6 +79,67 @@ export default function UsersPage() {
     
     setError(errorMessage);
     toast.error(errorMessage);
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    const filtered = users.filter(user => 
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredUsers(filtered);
+  }, [searchQuery, users]);
+
+  const requestSort = (key: keyof User) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortedUsers = () => {
+    if (!sortConfig) return filteredUsers;
+
+    return [...filteredUsers].sort((a, b) => {
+      if (sortConfig.key === 'created_at' || sortConfig.key === 'updated_at') {
+        const dateA = new Date(a[sortConfig.key]).getTime();
+        const dateB = new Date(b[sortConfig.key]).getTime();
+        return sortConfig.direction === 'ascending' ? dateA - dateB : dateB - dateA;
+      } else if (sortConfig.key === 'id') {
+        return sortConfig.direction === 'ascending' ? a.id - b.id : b.id - a.id;
+      } else {
+        if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'ascending' ? 1 : -1;
+        return 0;
+      }
+    });
+  };
+
+  const SortableHeader = ({ columnKey, label, icon: Icon }: { 
+    columnKey: keyof User; 
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }) => {
+    return (
+      <th 
+        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+        onClick={() => requestSort(columnKey)}
+      >
+        <div className="flex items-center">
+          <Icon className="h-4 w-4 mr-2" />
+          {label}
+          {sortConfig?.key === columnKey && (
+            <span className="ml-1">
+              {sortConfig.direction === 'ascending' ? '↑' : '↓'}
+            </span>
+          )}
+        </div>
+      </th>
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -137,32 +190,55 @@ export default function UsersPage() {
   const stats = {
     totalUsers: users.length,
     activeUsers: users.length,
+    recentlyAdded: users.filter(user => 
+      new Date(user.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    ).length,
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Total Users</h3>
-          <p className="mt-1 text-2xl font-semibold text-gray-900">{stats.totalUsers}</p>
+    <div className="space-y-6 p-4">
+      {/* Enhanced Stats Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-xl shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5">
+          <div className="flex items-center">
+            <UserIcon className="h-8 w-8 text-blue-600 mr-3" />
+            <div>
+              <h3 className="text-sm font-medium text-gray-600">Total Users</h3>
+              <p className="text-2xl font-bold text-gray-800">{stats.totalUsers}</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Active Users</h3>
-          <p className="mt-1 text-2xl font-semibold text-gray-900">{stats.activeUsers}</p>
+        <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-xl shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5">
+          <div className="flex items-center">
+            <IdentificationIcon className="h-8 w-8 text-green-600 mr-3" />
+            <div>
+              <h3 className="text-sm font-medium text-gray-600">Active Users</h3>
+              <p className="text-2xl font-bold text-gray-800">{stats.activeUsers}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-xl shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5">
+          <div className="flex items-center">
+            <CalendarIcon className="h-8 w-8 text-purple-600 mr-3" />
+            <div>
+              <h3 className="text-sm font-medium text-gray-600">Recently Added</h3>
+              <p className="text-2xl font-bold text-gray-800">{stats.recentlyAdded}</p>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Header with Add User Button */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900">Users Management</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Users Management</h1>
         <button
           onClick={() => {
             setEditingUser(null);
@@ -173,7 +249,7 @@ export default function UsersPage() {
             });
             setIsModalOpen(true);
           }}
-          className="btn-primary flex items-center"
+          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all duration-200"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
           Add New User
@@ -190,141 +266,177 @@ export default function UsersPage() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search users by name or email..."
-          className="input-field pl-10 w-full"
+          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
         />
       </div>
 
+      {/* Error/Empty State */}
       {error ? (
-        <div className="text-center py-12">
-          <p className="text-red-500">{error}</p>
+        <div className="text-center py-12 bg-red-50 rounded-lg">
+          <p className="text-red-500 font-medium">{error}</p>
           <p className="text-sm text-gray-500 mt-2">API URL: {API_ENDPOINTS.users}</p>
         </div>
       ) : filteredUsers.length === 0 ? (
-        <div className="text-center py-12">
+        <div className="text-center py-12 bg-gray-50 rounded-lg">
           <p className="text-gray-500">
             {searchQuery ? 'No users found matching your search.' : 'No users found in the database.'}
           </p>
         </div>
       ) : (
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Password Hash</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Updated At</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">#{user.id}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{user.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500 font-mono">
-                    {user.password ? `${user.password.substring(0, 10)}...` : <span className="italic text-gray-400">N/A</span>}
-                  </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">
-                      {new Date(user.created_at).toLocaleString()}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <SortableHeader columnKey="id" label="ID" icon={IdentificationIcon} />
+                  <SortableHeader columnKey="name" label="Name" icon={UserIcon} />
+                  <SortableHeader columnKey="email" label="Email" icon={EnvelopeIcon} />
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div className="flex items-center">
+                      <LockClosedIcon className="h-4 w-4 mr-2" />
+                      Password Hash
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">
-                      {new Date(user.updated_at).toLocaleString()}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(user)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      <PencilIcon className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(user.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
-                  </td>
+                  </th>
+                  <SortableHeader columnKey="created_at" label="Created At" icon={CalendarIcon} />
+                  <SortableHeader columnKey="updated_at" label="Updated At" icon={ClockIcon} />
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {getSortedUsers().map((user) => (
+                  <tr 
+                    key={user.id}
+                    className="transition-colors duration-150 hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <IdentificationIcon className="h-5 w-5 text-gray-500 mr-2" />
+                        <div className="text-sm font-medium text-gray-900">#{user.id}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <UserIcon className="h-5 w-5 text-blue-500 mr-2" />
+                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <EnvelopeIcon className="h-5 w-5 text-purple-500 mr-2" />
+                        <div className="text-sm text-gray-500">{user.email}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <LockClosedIcon className="h-5 w-5 text-gray-400 mr-2" />
+                        <div className="text-sm text-gray-500 font-mono">
+                          {user.password ? `${user.password.substring(0, 8)}...` : <span className="italic text-gray-400">N/A</span>}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <CalendarIcon className="h-5 w-5 text-amber-500 mr-2" />
+                        <div className="text-sm text-gray-500">
+                          {new Date(user.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <ClockIcon className="h-5 w-5 text-green-500 mr-2" />
+                        <div className="text-sm text-gray-500">
+                          {new Date(user.updated_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEdit(user)}
+                          className="p-2 text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 hover:scale-110 active:scale-95 transition-all"
+                        >
+                          <PencilIcon className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user.id)}
+                          className="p-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 hover:scale-110 active:scale-95 transition-all"
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
+      {/* Enhanced Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-lg font-semibold mb-4">
-              {editingUser ? 'Edit User' : 'Add New User'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="input-field mt-1"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="input-field mt-1"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {editingUser ? 'New Password (leave blank to keep current)' : 'Password'}
-                </label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="input-field mt-1"
-                  required={!editingUser}
-                />
-              </div>
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="btn-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary"
-                >
-                  {editingUser ? 'Update' : 'Add'} User
-                </button>
-              </div>
-            </form>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full animate-scaleIn">
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">
+                {editingUser ? 'Edit User' : 'Add New User'}
+              </h2>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {[
+                  { label: 'Name', name: 'name', icon: UserIcon },
+                  { label: 'Email', name: 'email', icon: EnvelopeIcon },
+                  { 
+                    label: editingUser ? 'New Password (leave blank to keep current)' : 'Password',
+                    name: 'password', 
+                    icon: LockClosedIcon,
+                    type: 'password'
+                  },
+                ].map((field) => (
+                  <div key={field.name}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {field.label}
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <field.icon className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type={field.type || 'text'}
+                        value={formData[field.name as keyof typeof formData]}
+                        onChange={(e) => setFormData({ 
+                          ...formData, 
+                          [field.name]: e.target.value 
+                        })}
+                        className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        required={field.name === 'password' ? !editingUser : true}
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    {editingUser ? 'Update User' : 'Add User'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
-} 
+}
