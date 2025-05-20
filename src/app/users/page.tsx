@@ -1,3 +1,4 @@
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import { API_ENDPOINTS } from '@/lib/config';
@@ -31,6 +32,7 @@ export default function UsersPage() {
     key: keyof User;
     direction: 'ascending' | 'descending';
   } | null>(null);
+  // Pagination logic
   const usersPerPage = 10;
   const [currentPage, setCurrentPage] = React.useState(1);
 
@@ -196,9 +198,17 @@ export default function UsersPage() {
     ).length,
   };
 
+  // Reset to first page when search or sort changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sortConfig, users]);
+
+  // Get sorted and filtered users for current page
+  const sortedUsers = getSortedUsers();
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
-  const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
+  const currentUsers = sortedUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(sortedUsers.length / usersPerPage);
 
   if (loading) {
     return (
@@ -310,7 +320,7 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {getSortedUsers().map((user) => (
+                {currentUsers.map((user) => (
                   <tr 
                     key={user.id}
                     className="transition-colors duration-150 hover:bg-gray-50"
@@ -382,27 +392,32 @@ export default function UsersPage() {
       )}
 
       {/* Pagination Controls */}
-      <div className="flex justify-between items-center py-4">
-        <div className="text-sm text-gray-500">
-          Showing {indexOfFirstUser + 1} to {Math.min(indexOfLastUser, users.length)} of {users.length} users
+      {filteredUsers.length > 0 && (
+        <div className="flex justify-between items-center py-4">
+          <div className="text-sm text-gray-500">
+            Showing {sortedUsers.length === 0 ? 0 : indexOfFirstUser + 1} to {Math.min(indexOfLastUser, sortedUsers.length)} of {sortedUsers.length} users
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg shadow-sm hover:bg-gray-300 transition-all disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="px-2 py-2 text-gray-700">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg shadow-sm hover:bg-gray-300 transition-all disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         </div>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg shadow-sm hover:bg-gray-300 transition-all disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => setCurrentPage(prev => prev + 1)}
-            disabled={indexOfLastUser >= users.length}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg shadow-sm hover:bg-gray-300 transition-all disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Enhanced Modal */}
       {isModalOpen && (
