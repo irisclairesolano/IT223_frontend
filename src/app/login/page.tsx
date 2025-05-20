@@ -42,11 +42,29 @@ export default function LoginPage() {
         toast.error('Invalid response from server');
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 
-                         (error.message === 'Network Error' 
-                          ? 'Network error. Please check your connection.' 
-                          : 'Login failed. Please try again.');
-      toast.error(errorMessage);
+
+      // Log detailed error information
+      console.error('Login error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers,
+          data: error.config?.data
+        }
+      });
+      
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else if (error.message === 'Network Error') {
+        toast.error('Action too frequent. Try again later');
+      } else {
+        toast.error(`Login failed: ${error.message}`);
+      }
+
     } finally {
       setLoading(false);
     }
