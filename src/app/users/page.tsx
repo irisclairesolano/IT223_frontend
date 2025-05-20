@@ -32,6 +32,8 @@ export default function UsersPage() {
     email: '',
     password: '',
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 10;
 
   useEffect(() => {
     console.log('Auth state:', { isAuthenticated, authLoading });
@@ -151,6 +153,20 @@ export default function UsersPage() {
     }
   };
 
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  useEffect(() => {
+    setCurrentPage(1); // Reset to first page on search/filter change
+  }, [searchQuery, users]);
+
   if (authLoading) {
     console.log('Auth loading...');
     return (
@@ -241,7 +257,7 @@ export default function UsersPage() {
       ) : (
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
-            {filteredUsers.map((user) => (
+            {currentUsers.map((user) => (
               <li key={user.id} className="px-6 py-4 hover:bg-gray-50">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
@@ -271,6 +287,34 @@ export default function UsersPage() {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4 space-x-2">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-1 rounded border bg-white text-gray-700 disabled:opacity-50"
+          >
+            Prev
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i + 1}
+              onClick={() => handlePageChange(i + 1)}
+              className={`px-3 py-1 rounded border ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 rounded border bg-white text-gray-700 disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
       )}
 
