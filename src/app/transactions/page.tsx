@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { API_ENDPOINTS } from '@/lib/config';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { PlusIcon, ArrowPathIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, MagnifyingGlassIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -12,13 +12,10 @@ interface Transaction {
   id: number;
   user_id: number;
   book_id: number;
-  available_copies: number;
   borrowed_at: string;
   due_at: string;
   returned_at: string | null;
   late_fee: number;
-  created_at: string;
-  updated_at: string;
   user?: {
     name: string;
     email: string;
@@ -51,6 +48,7 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [books, setBooks] = useState<Book[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -59,6 +57,7 @@ export default function TransactionsPage() {
     book_id: '',
     due_at: '',
   });
+  const [editData, setEditData] = useState<Transaction | null>(null);
 
   useEffect(() => {
     if (!authLoading) {
@@ -85,10 +84,45 @@ export default function TransactionsPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(API_ENDPOINTS.transactions);
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      };
+
+      // Log the full request details
+      console.log('Fetching transactions with config:', {
+        url: API_ENDPOINTS.transactions,
+        headers: config.headers
+      });
+
+      const response = await axios.get(API_ENDPOINTS.transactions, config);
+      
+      // Log successful response
+      console.log('Transactions response:', {
+        status: response.status,
+        data: response.data
+      });
+
       setTransactions(response.data);
       setFilteredTransactions(response.data);
     } catch (error: any) {
+      // Enhanced error logging
+      console.error('Transaction fetch error:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers
+        }
+      });
       handleError(error);
     } finally {
       setLoading(false);
@@ -97,7 +131,13 @@ export default function TransactionsPage() {
 
   const fetchBooks = async () => {
     try {
-      const response = await axios.get(API_ENDPOINTS.books);
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined
+        }
+      };
+      const response = await axios.get(API_ENDPOINTS.books, config);
       setBooks(response.data);
     } catch (error: any) {
       console.error('Error fetching books:', error);
@@ -106,7 +146,13 @@ export default function TransactionsPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(API_ENDPOINTS.users);
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined
+        }
+      };
+      const response = await axios.get(API_ENDPOINTS.users, config);
       setUsers(response.data);
     } catch (error: any) {
       console.error('Error fetching users:', error);
@@ -150,7 +196,14 @@ export default function TransactionsPage() {
   const handleBorrow = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post(API_ENDPOINTS.borrow, formData);
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined
+        }
+      };
+
+      await axios.post(API_ENDPOINTS.borrow, formData, config);
       toast.success('Book borrowed successfully');
       setIsModalOpen(false);
       setFormData({
@@ -159,7 +212,7 @@ export default function TransactionsPage() {
         due_at: '',
       });
       fetchTransactions();
-      fetchBooks(); // Refresh books to update available copies
+      fetchBooks();
     } catch (error: any) {
       handleError(error);
     }
@@ -168,13 +221,61 @@ export default function TransactionsPage() {
   const handleReturn = async (id: number) => {
     if (window.confirm('Are you sure you want to return this book?')) {
       try {
-        await axios.post(`${API_ENDPOINTS.return}/${id}`);
+        const token = localStorage.getItem('token');
+        const config = {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : undefined
+          }
+        };
+
+        await axios.post(`${API_ENDPOINTS.return}/${id}`, {}, config);
         toast.success('Book returned successfully');
         fetchTransactions();
-        fetchBooks(); // Refresh books to update available copies
+        fetchBooks();
       } catch (error: any) {
         handleError(error);
       }
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm('Are you sure you want to delete this transaction?')) {
+      try {
+        const token = localStorage.getItem('token');
+        const config = {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : undefined
+          }
+        };
+
+        await axios.delete(`${API_ENDPOINTS.transactions}/${id}`, config);
+        toast.success('Transaction deleted successfully');
+        fetchTransactions();
+      } catch (error: any) {
+        handleError(error);
+      }
+    }
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editData) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined
+        }
+      };
+
+      await axios.put(`${API_ENDPOINTS.transactions}/${editData.id}`, editData, config);
+      toast.success('Transaction updated successfully');
+      setIsEditModalOpen(false);
+      setEditData(null);
+      fetchTransactions();
+    } catch (error: any) {
+      handleError(error);
     }
   };
 
@@ -241,49 +342,72 @@ export default function TransactionsPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredTransactions.map((transaction) => (
-              <tr key={transaction.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{transaction.user?.name}</div>
-                  <div className="text-sm text-gray-500">{transaction.user?.email}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{transaction.book?.title}</div>
-                  <div className="text-sm text-gray-500">{transaction.book?.author}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(transaction.borrowed_at).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(transaction.due_at).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    transaction.returned_at
-                      ? 'bg-green-100 text-green-800'
-                      : new Date(transaction.due_at) < new Date()
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-blue-100 text-blue-800'
-                  }`}>
-                    {transaction.returned_at
-                      ? 'Returned'
-                      : new Date(transaction.due_at) < new Date()
-                      ? 'Overdue'
-                      : 'Active'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  {!transaction.returned_at && (
-                    <button
-                      onClick={() => handleReturn(transaction.id)}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      Return
-                    </button>
-                  )}
+            {filteredTransactions.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                  No transactions found
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredTransactions.map((transaction) => (
+                <tr key={transaction.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{transaction.user?.name}</div>
+                    <div className="text-sm text-gray-500">{transaction.user?.email}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{transaction.book?.title}</div>
+                    <div className="text-sm text-gray-500">{transaction.book?.author}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(transaction.borrowed_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(transaction.due_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      transaction.returned_at
+                        ? 'bg-green-100 text-green-800'
+                        : new Date(transaction.due_at) < new Date()
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {transaction.returned_at
+                        ? 'Returned'
+                        : new Date(transaction.due_at) < new Date()
+                        ? 'Overdue'
+                        : 'Active'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                    {!transaction.returned_at && (
+                      <button
+                        onClick={() => handleReturn(transaction.id)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        Return
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setEditData(transaction);
+                        setIsEditModalOpen(true);
+                      }}
+                      className="text-indigo-600 hover:text-indigo-900"
+                    >
+                      <PencilIcon className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(transaction.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -354,6 +478,47 @@ export default function TransactionsPage() {
                   className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   Borrow
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Transaction Modal */}
+      {isEditModalOpen && editData && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-lg font-medium mb-4">Edit Transaction</h2>
+            <form onSubmit={handleEdit}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Due Date</label>
+                  <input
+                    type="date"
+                    value={editData.due_at.split('T')[0]}
+                    onChange={(e) => setEditData({ ...editData, due_at: e.target.value })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setEditData(null);
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Update
                 </button>
               </div>
             </form>
