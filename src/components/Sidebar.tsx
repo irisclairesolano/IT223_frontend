@@ -9,7 +9,8 @@ import {
   ChartBarIcon,
   ArrowRightOnRectangleIcon,
   XMarkIcon,
-  Bars3BottomLeftIcon
+  Bars3BottomLeftIcon,
+  ClipboardDocumentIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/lib/AuthContext';
 import { useState, useEffect } from 'react';
@@ -18,7 +19,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Books', href: '/books', icon: BookOpenIcon },
   { name: 'Users', href: '/users', icon: UsersIcon },
-  { name: 'Transactions', href: '/transactions', icon: ChartBarIcon },
+  { name: 'Transactions', href: '/transactions', icon: ClipboardDocumentIcon },
   { name: 'Reports', href: '/reports', icon: ChartBarIcon },
 ];
 
